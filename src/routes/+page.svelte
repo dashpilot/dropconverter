@@ -27,6 +27,7 @@
       { value: 'best', label: 'Best Quality' },
       { value: 'smaller', label: 'Smaller Filesize' }
     ];
+    let isVideo = false;
   
     onMount(() => {
       if (!ffmpeg) {
@@ -88,6 +89,7 @@
   
     const updateConversionOptions = (fileType) => {
       if (fileType.startsWith('audio/')) {
+        isVideo = false;
         conversionOptions = [
           { value: 'convert-to-wav', label: 'Convert to WAV' },
           { value: 'convert-to-mp3', label: 'Convert to MP3' },
@@ -99,6 +101,7 @@
         ];
         conversionType = 'convert-to-wav';
       } else if (fileType.startsWith('video/')) {
+        isVideo = true;
         conversionOptions = [
           { value: 'convert-to-mp4', label: 'Convert to MP4' },
           { value: 'convert-to-mov', label: 'Convert to MOV' },
@@ -141,16 +144,12 @@
         }
       } catch (err) {
         console.error('Error during transcoding:', err);
-       
-
-        if(err.message == 'called FFmpeg.terminate()'){
-            last_error = false;
-        }else{
-            last_error = err.message;
-            error = `Error during conversion: ${last_error}`;
+        if (err.message === 'called FFmpeg.terminate()') {
+          last_error = false;
+        } else {
+          last_error = err.message;
+          error = `Error during conversion: ${last_error}`;
         }
-
-        
       } finally {
         isLoading = false;
       }
@@ -279,7 +278,7 @@
           {/each}
         </select>
   
-        {#if conversionType.startsWith('convert-to-')}
+        {#if isVideo}
           <select bind:value={resolution} class="form-select mb-3" on:change={hideDownloadAndProgress}>
             {#each resolutionOptions as option}
               <option value={option.value}>{option.label}</option>
