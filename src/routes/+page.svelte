@@ -152,6 +152,8 @@
         }
       } finally {
         isLoading = false;
+        progress_perc = 0; // Reset progress bar
+        // Do not call hideDownloadAndProgress here to keep the download link visible
       }
     };
   
@@ -306,7 +308,7 @@
           <div class="progress mt-2">
             <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: {progress_perc}%;"></div>
           </div>
-          <button on:click={cancelTranscode} class="btn btn-danger w-100 mt-2">Cancel</button>
+          <button on:click={cancelTranscode} class="btn btn-outline-danger w-100 mt-2">Cancel</button>
         {/if}
       {/if}
   
