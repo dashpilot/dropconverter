@@ -8,17 +8,24 @@
     let file;
     let conversionType = 'convert-to-wav';
     let resolution = 'current';
+    let quality = 'best';
     let messageRef;
     let downloadLink;
     let dropzoneClass = '';
     let fileInput;
     let isLoading = false;
     let progress_perc = 0;
+    let error = '';
+    let last_error = '';
     let conversionOptions = [];
     let resolutionOptions = [
       { value: 'current', label: 'Current Resolution' },
       { value: '1080p', label: '1080P' },
       { value: '720p', label: '720P' }
+    ];
+    let qualityOptions = [
+      { value: 'best', label: 'Best Quality' },
+      { value: 'smaller', label: 'Smaller Filesize' }
     ];
   
     onMount(() => {
@@ -54,6 +61,7 @@
       file = event.target.files[0];
       dropzoneClass = 'file-dropped';
       updateConversionOptions(file.type);
+      hideDownloadAndProgress();
     };
   
     const handleDrop = (event) => {
@@ -62,6 +70,7 @@
       file = event.dataTransfer.files[0];
       dropzoneClass = 'file-dropped';
       updateConversionOptions(file.type);
+      hideDownloadAndProgress();
     };
   
     const handleDragOver = (event) => {
@@ -95,10 +104,17 @@
           { value: 'convert-to-mov', label: 'Convert to MOV' },
           { value: 'convert-to-webm', label: 'Convert to WEBM' },
           { value: 'convert-to-mkv', label: 'Convert to MKV' },
-          { value: 'convert-to-gif', label: 'Convert to GIF' }
+          { value: 'convert-to-gif', label: 'Convert to Animated GIF' }
         ];
         conversionType = 'convert-to-mp4';
       }
+    };
+  
+    const hideDownloadAndProgress = () => {
+      downloadLink.style.display = 'none';
+      downloadLink.innerHTML = '';
+      progress_perc = 0;
+      error = '';
     };
   
     const transcode = async () => {
@@ -108,6 +124,8 @@
       }
   
       isLoading = true;
+      hideDownloadAndProgress();
+      progress_perc = 0;
   
       // Artificial delay to make the spinner spin slightly longer
       await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
@@ -119,13 +137,39 @@
         if (conversionType === 'stereo-to-mono') {
           await convertStereoToMono();
         } else {
-          await convertFile(conversionType, resolution);
+          await convertFile(conversionType, resolution, quality);
         }
-      } catch (error) {
-        console.error('Error during transcoding:', error);
-        messageRef.innerHTML = 'Error during transcoding. Check console for details.';
+      } catch (err) {
+        console.error('Error during transcoding:', err);
+       
+
+        if(err.message == 'called FFmpeg.terminate()'){
+            last_error = false;
+        }else{
+            last_error = err.message;
+            error = `Error during conversion: ${last_error}`;
+        }
+
+        
       } finally {
         isLoading = false;
+      }
+    };
+  
+    const cancelTranscode = async () => {
+      if (ffmpeg) {
+        try {
+          await ffmpeg.terminate();
+        } catch (err) {
+          // Suppress the warning message
+          if (err.message !== 'Error: called FFmpeg.terminate()') {
+            console.error('Error during termination:', err);
+          }
+        }
+        isLoading = false;
+        progress_perc = 0;
+        hideDownloadAndProgress();
+        await load(); // Reload ffmpeg after termination
       }
     };
   
@@ -144,15 +188,22 @@
       createRightLink(rightData, rightFilename, 'audio/wav', downloadLink);
     };
   
-    const convertFile = async (type, resolution) => {
+    const convertFile = async (type, resolution, quality) => {
       let outputFilename;
       let outputType;
       let resolutionOption = [];
+      let qualityOption = [];
   
       if (resolution === '1080p') {
         resolutionOption = ['-vf', 'scale=1920:1080'];
       } else if (resolution === '720p') {
         resolutionOption = ['-vf', 'scale=1280:720'];
+      }
+  
+      if (quality === 'best') {
+        qualityOption = ['-q:v', '2'];
+      } else if (quality === 'smaller') {
+        qualityOption = ['-b:v', '1M'];
       }
   
       if (type === 'convert-to-wav') {
@@ -180,19 +231,19 @@
         outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.m4a`;
         outputType = 'audio/m4a';
       } else if (type === 'convert-to-mp4') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, 'output.mp4']);
+        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.mp4']);
         outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mp4`;
         outputType = 'video/mp4';
       } else if (type === 'convert-to-mov') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, 'output.mov']);
+        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.mov']);
         outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mov`;
         outputType = 'video/quicktime';
       } else if (type === 'convert-to-webm') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, 'output.webm']);
+        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.webm']);
         outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.webm`;
         outputType = 'video/webm';
       } else if (type === 'convert-to-mkv') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, 'output.mkv']);
+        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.mkv']);
         outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mkv`;
         outputType = 'video/x-matroska';
       } else if (type === 'convert-to-gif') {
@@ -222,18 +273,26 @@
   
       {#if file}
         <br/>
-        <select bind:value={conversionType} class="form-select mb-3">
+        <select bind:value={conversionType} class="form-select mb-3" on:change={hideDownloadAndProgress}>
           {#each conversionOptions as option}
             <option value={option.value}>{option.label}</option>
           {/each}
         </select>
   
         {#if conversionType.startsWith('convert-to-')}
-          <select bind:value={resolution} class="form-select mb-3">
+          <select bind:value={resolution} class="form-select mb-3" on:change={hideDownloadAndProgress}>
             {#each resolutionOptions as option}
               <option value={option.value}>{option.label}</option>
             {/each}
           </select>
+  
+          {#if conversionType !== 'convert-to-gif'}
+            <select bind:value={quality} class="form-select mb-3" on:change={hideDownloadAndProgress}>
+              {#each qualityOptions as option}
+                <option value={option.value}>{option.label}</option>
+              {/each}
+            </select>
+          {/if}
         {/if}
   
         <button on:click={transcode} class="btn btn-dark w-100" disabled={!file}>
@@ -244,9 +303,16 @@
           {/if}
         </button>
   
-        <div class="progress mt-2">
-          <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: {progress_perc}%;"></div>
-        </div>
+        {#if progress_perc > 0}
+          <div class="progress mt-2">
+            <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: {progress_perc}%;"></div>
+          </div>
+          <button on:click={cancelTranscode} class="btn btn-danger w-100 mt-2">Cancel</button>
+        {/if}
+      {/if}
+  
+      {#if error}
+        <div class="alert alert-danger mt-2">{error}</div>
       {/if}
   
       <p bind:this={messageRef} class="hidden"></p>
