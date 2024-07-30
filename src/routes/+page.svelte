@@ -207,72 +207,82 @@
     };
   
     const convertFile = async (type, resolution, quality) => {
-      let outputFilename;
-      let outputType;
-      let resolutionOption = [];
-      let qualityOption = [];
-  
-      if (resolution === '1080p') {
-        resolutionOption = ['-vf', 'scale=1920:1080'];
-      } else if (resolution === '720p') {
-        resolutionOption = ['-vf', 'scale=1280:720'];
-      }
-  
-      if (quality === 'best') {
-        qualityOption = ['-q:v', '2'];
-      } else if (quality === 'smaller') {
-        qualityOption = ['-b:v', '1M'];
-      }
-  
-      if (type === 'convert-to-wav') {
-        await ffmpeg.exec(['-i', 'input', 'output.wav']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.wav`;
-        outputType = 'audio/wav';
-      } else if (type === 'convert-to-mp3') {
-        await ffmpeg.exec(['-i', 'input', 'output.mp3']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mp3`;
-        outputType = 'audio/mp3';
-      } else if (type === 'convert-to-aac') {
-        await ffmpeg.exec(['-i', 'input', 'output.aac']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.aac`;
-        outputType = 'audio/aac';
-      } else if (type === 'convert-to-flac') {
-        await ffmpeg.exec(['-i', 'input', 'output.flac']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.flac`;
-        outputType = 'audio/flac';
-      } else if (type === 'convert-to-ogg') {
-        await ffmpeg.exec(['-i', 'input', 'output.ogg']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.ogg`;
-        outputType = 'audio/ogg';
-      } else if (type === 'convert-to-m4a') {
-        await ffmpeg.exec(['-i', 'input', 'output.m4a']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.m4a`;
-        outputType = 'audio/m4a';
-      } else if (type === 'convert-to-mp4') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.mp4']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mp4`;
-        outputType = 'video/mp4';
-      } else if (type === 'convert-to-mov') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.mov']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mov`;
-        outputType = 'video/quicktime';
-      } else if (type === 'convert-to-webm') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.webm']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.webm`;
-        outputType = 'video/webm';
-      } else if (type === 'convert-to-mkv') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, ...qualityOption, 'output.mkv']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mkv`;
-        outputType = 'video/x-matroska';
-      } else if (type === 'convert-to-gif') {
-        await ffmpeg.exec(['-i', 'input', ...resolutionOption, 'output.gif']);
-        outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.gif`;
-        outputType = 'image/gif';
-      }
-  
-      const outputData = await ffmpeg.readFile(`output.${type.split('-').pop()}`);
-      createDownloadLink(outputData, outputFilename, outputType, downloadLink);
-    };
+    let outputFilename;
+    let outputType;
+    let resolutionOption = [];
+    let qualityOption = [];
+    let watermarkOption = [];
+
+    if (resolution === '1080p') {
+      resolutionOption = ['-vf', 'scale=1920:1080'];
+    } else if (resolution === '720p') {
+      resolutionOption = ['-vf', 'scale=1280:720'];
+    }
+
+    if (quality === 'best') {
+      qualityOption = ['-q:v', '2'];
+    } else if (quality === 'smaller') {
+      qualityOption = ['-b:v', '1M'];
+    }
+
+    if (!token && isVideo) {
+      // Add watermark if token is false and the file is a video
+      const watermarkPath = 'https://dropconverter.com/img/watermark.png'; // Update with the actual path to your watermark image
+      watermarkOption = ['-i', watermarkPath, '-filter_complex', 'overlay=10:10'];
+    }
+
+    const inputOptions = ['-i', 'input'];
+    const outputOptions = [...resolutionOption, ...qualityOption];
+
+    if (type === 'convert-to-wav') {
+      await ffmpeg.exec([...inputOptions, 'output.wav']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.wav`;
+      outputType = 'audio/wav';
+    } else if (type === 'convert-to-mp3') {
+      await ffmpeg.exec([...inputOptions, 'output.mp3']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mp3`;
+      outputType = 'audio/mp3';
+    } else if (type === 'convert-to-aac') {
+      await ffmpeg.exec([...inputOptions, 'output.aac']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.aac`;
+      outputType = 'audio/aac';
+    } else if (type === 'convert-to-flac') {
+      await ffmpeg.exec([...inputOptions, 'output.flac']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.flac`;
+      outputType = 'audio/flac';
+    } else if (type === 'convert-to-ogg') {
+      await ffmpeg.exec([...inputOptions, 'output.ogg']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.ogg`;
+      outputType = 'audio/ogg';
+    } else if (type === 'convert-to-m4a') {
+      await ffmpeg.exec([...inputOptions, 'output.m4a']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.m4a`;
+      outputType = 'audio/m4a';
+    } else if (type === 'convert-to-mp4') {
+      await ffmpeg.exec([...inputOptions, ...watermarkOption, ...outputOptions, 'output.mp4']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mp4`;
+      outputType = 'video/mp4';
+    } else if (type === 'convert-to-mov') {
+      await ffmpeg.exec([...inputOptions, ...watermarkOption, ...outputOptions, 'output.mov']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mov`;
+      outputType = 'video/quicktime';
+    } else if (type === 'convert-to-webm') {
+      await ffmpeg.exec([...inputOptions, ...watermarkOption, ...outputOptions, 'output.webm']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.webm`;
+      outputType = 'video/webm';
+    } else if (type === 'convert-to-mkv') {
+      await ffmpeg.exec([...inputOptions, ...watermarkOption, ...outputOptions, 'output.mkv']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.mkv`;
+      outputType = 'video/x-matroska';
+    } else if (type === 'convert-to-gif') {
+      await ffmpeg.exec([...inputOptions, ...resolutionOption, 'output.gif']);
+      outputFilename = `${file.name.split('.').slice(0, -1).join('.')}.gif`;
+      outputType = 'image/gif';
+    }
+
+    const outputData = await ffmpeg.readFile(`output.${type.split('-').pop()}`);
+    createDownloadLink(outputData, outputFilename, outputType, downloadLink);
+  };
 
 
 
