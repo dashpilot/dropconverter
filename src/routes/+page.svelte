@@ -258,7 +258,7 @@
     };
   </script>
   
-  <a href="/" class="logo dashed" style="background-image: url(/img/tapedeck.png);"></a>
+  <a on:click={() => window.location.reload()} class="logo dashed" style="background-image: url(/img/tapedeck.png);"></a>
   
   <div class="micro-container">
     <div class="text-center">
