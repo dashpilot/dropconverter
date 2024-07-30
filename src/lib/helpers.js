@@ -35,6 +35,7 @@ export const createRightLink = (data, filename, type, linkElement) => {
     rightLink.download = filename;
     rightLink.style.display = 'block';
     rightLink.innerHTML = `Download ${filename}`;
+    rightLink.classList.add('btn', 'btn-success', 'w-100', 'mt-3');
     linkElement.parentNode.appendChild(rightLink);
 };
 
