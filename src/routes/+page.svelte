@@ -308,6 +308,11 @@
       }
     });
   }
+
+  function logout(){
+    localStorage.removeItem('token');
+    token = false;
+  }
   </script>
   
   <a on:click={() => window.location.reload()} class="logo dashed" style="background-image: url(/img/tapedeck.png);"></a>
@@ -379,7 +384,20 @@
   </div>
   
   {#if loaded}
-    <p class="text-center mt-2">Drop what you're doing!</p>
+    <p class="text-center mt-2">
+        
+        
+        {#if token}
+        <a on:click={logout}>log out</a>
+        {:else}
+        Drop what you're doing!
+        {/if}
+     
+
+
+
+
+    </p>
   {:else}
     <p class="text-center mt-2">Loading...</p>
   {/if}
