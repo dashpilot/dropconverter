@@ -36,6 +36,21 @@
         ffmpeg = new FFmpeg();
         load();
       }
+
+      const storedToken = localStorage.getItem('token');
+        if (storedToken) {
+        token = storedToken;
+        }
+
+        /*
+        // Add event listener for OAuth window messages
+        window.addEventListener('message', (event) => {
+            if (event.origin === 'https://dropconverter.com') {
+                token = event.data.token;
+                localStorage.setItem('token', token);
+            }
+        });
+        */
     });
   
     const load = async () => {
@@ -322,8 +337,9 @@
             </select>
           {/if}
 
-
+          {#if !token}
           <button class="btn btn-primary w-100 mb-3" on:click={openOAuthWindow}><i class="fab fa-google"></i> &nbsp; sign in to remove watermarks</button>
+          {/if}
 
         {/if}
   
@@ -353,7 +369,7 @@
   </div>
   
   {#if loaded}
-    <p class="text-center mt-2">Drop what you're doing! {token}</p>
+    <p class="text-center mt-2">Drop what you're doing!</p>
   {:else}
     <p class="text-center mt-2">Loading...</p>
   {/if}
