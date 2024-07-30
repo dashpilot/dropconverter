@@ -28,6 +28,8 @@
       { value: 'smaller', label: 'Smaller Filesize' }
     ];
     let isVideo = false;
+
+    let token = false;
   
     onMount(() => {
       if (!ffmpeg) {
@@ -256,6 +258,31 @@
       const outputData = await ffmpeg.readFile(`output.${type.split('-').pop()}`);
       createDownloadLink(outputData, outputFilename, outputType, downloadLink);
     };
+
+
+
+  function openOAuthWindow() {
+    const oauthUrl = 'https://oauth.blogbirdapi.nl/auth?dom=dropconverter.com';
+    const width = 600;
+    const height = 600;
+    const left = (window.innerWidth / 2) - (width / 2);
+    const top = (window.innerHeight / 2) - (height / 2);
+
+    const oauthWindow = window.open(
+      oauthUrl,
+      'OAuthWindow',
+      `width=${width},height=${height},top=${top},left=${left}`
+    );
+
+    window.addEventListener('message', (event) => {
+      if (event.origin === 'https://oauth.blogbirdapi.nl') {
+        console.log(token);
+        token = event.data.token;
+        localStorage.setItem('token', token);
+        oauthWindow.close();
+      }
+    });
+  }
   </script>
   
   <a on:click={() => window.location.reload()} class="logo dashed" style="background-image: url(/img/tapedeck.png);"></a>
@@ -294,6 +321,10 @@
               {/each}
             </select>
           {/if}
+
+
+          <button class="btn btn-primary w-100 mb-3" on:click={openOAuthWindow}><i class="fab fa-google"></i> &nbsp; sign in to remove watermarks</button>
+
         {/if}
   
         <button on:click={transcode} class="btn btn-dark w-100" disabled={!file}>
@@ -322,7 +353,7 @@
   </div>
   
   {#if loaded}
-    <p class="text-center mt-2">Drop what you're doing!</p>
+    <p class="text-center mt-2">Drop what you're doing! {token}</p>
   {:else}
     <p class="text-center mt-2">Loading...</p>
   {/if}
