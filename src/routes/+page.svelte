@@ -227,7 +227,7 @@
 
     if (!token && isVideo) {
       // Add watermark if token is false and the file is a video
-      const watermarkPath = 'img/watermark.png'; // Update with the actual path to your watermark image
+      const watermarkPath = 'https://dropconverter.com/img/watermark.png'; // Update with the actual path to your watermark image
       watermarkOption = ['-i', watermarkPath, '-filter_complex', 'overlay=10:10'];
     }
 
