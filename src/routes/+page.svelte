@@ -230,7 +230,7 @@
     if (!token && isVideo) {
       // Add watermark if token is false and the file is a video
       const watermarkPath = 'watermark.png'; // Path to the watermark image in the FFmpeg file system
-      await ffmpeg.writeFile(watermarkPath, await fetchFile('https://dropconverter.com/watermark.png'));
+      await ffmpeg.writeFile(watermarkPath, await fetchFile('https://dropconverter.com/img/watermark.png'));
       watermarkOption = ['-i', watermarkPath, '-filter_complex', 'overlay=10:10'];
     }
 
