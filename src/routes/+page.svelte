@@ -1,7 +1,7 @@
 <script>
     import { onMount } from 'svelte';
-    import { FFmpeg } from '@ffmpeg/ffmpeg';
-    import { readFile, toBlobURL, createDownloadLink, createRightLink, resetState } from '$lib/helpers.js';
+    import { FFmpeg  } from '@ffmpeg/ffmpeg';
+    import { readFile, toBlobURL, createDownloadLink, createRightLink, resetState, fetchFile } from '$lib/helpers.js';
   
     let loaded = false;
     let ffmpeg;
@@ -31,6 +31,7 @@
 
     let token = false;
   
+  
     onMount(() => {
       if (!ffmpeg) {
         ffmpeg = new FFmpeg();
@@ -41,6 +42,7 @@
         if (storedToken) {
         token = storedToken;
         }
+
 
         /*
         // Add event listener for OAuth window messages
@@ -227,7 +229,8 @@
 
     if (!token && isVideo) {
       // Add watermark if token is false and the file is a video
-      const watermarkPath = 'watermark.png'; // Update with the actual path to your watermark image
+      const watermarkPath = 'watermark.png'; // Path to the watermark image in the FFmpeg file system
+      await ffmpeg.writeFile(watermarkPath, await fetchFile('https://dropconverter.com/watermark.png'));
       watermarkOption = ['-i', watermarkPath, '-filter_complex', 'overlay=10:10'];
     }
 

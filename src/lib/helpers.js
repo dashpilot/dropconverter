@@ -52,3 +52,9 @@ export function resetState(file, dropzoneClass, messageRef, downloadLink) {
         if (rightLink) rightLink.remove();
     }
 }
+
+export async function fetchFile(url) {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    return new Uint8Array(buffer);
+}
